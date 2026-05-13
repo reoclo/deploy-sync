@@ -1,6 +1,6 @@
 {
   "name": "@reoclo/deploy-sync",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "type": "module",
   "description": "Sync proxy routes with Reoclo after an external container deployment",
