@@ -53,7 +53,7 @@ or carry the `reoclo.managed=true` label (see [How discovery works](#how-discove
 | `api_key` | yes | — | Reoclo tenant API key (`rca_*`) with `external_deploy` scope |
 | `compose_file` | no | — | Path to a docker-compose file for auto-discovery |
 | `services` | no | — | Comma-separated `container_name:port` pairs. Mutually exclusive with `compose_file`. |
-| `api_url` | no | `https://app.reoclo.com` | Override for self-hosted Reoclo instances |
+| `api_url` | no | `https://api.reoclo.com` | Override for self-hosted Reoclo instances |
 | `force` | no | `false` | Skip conflict checks. Use only for legitimate hotfixes. |
 
 ## Outputs

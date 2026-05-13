@@ -25916,7 +25916,7 @@ async function run() {
         const apiKey = core.getInput("api_key", { required: true });
         const composeFile = core.getInput("compose_file") || "";
         const servicesInput = core.getInput("services") || "";
-        const apiUrl = core.getInput("api_url") || "https://app.reoclo.com";
+        const apiUrl = core.getInput("api_url") || "https://api.reoclo.com";
         const forceInput = core.getInput("force") || "false";
         const force = forceInput.toLowerCase() === "true";
         // Validate mutually exclusive inputs

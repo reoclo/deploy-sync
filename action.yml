@@ -16,7 +16,7 @@ inputs:
   api_url:
     description: 'Reoclo API URL (override for self-hosted instances)'
     required: false
-    default: 'https://app.reoclo.com'
+    default: 'https://api.reoclo.com'
   force:
     description: 'Override conflict checks for this run (rare; use only for legitimate hotfixes).'
     required: false
