@@ -43,7 +43,7 @@ or carry the `reoclo.managed=true` label (see [How discovery works](#how-discove
   uses: reoclo/deploy-sync@v1
   with:
     api_key: ${{ secrets.REOCLO_API_KEY }}
-    services: 'portfolio-prod-frontend:4321,passtheverse-web-1:3000'
+    services: 'web:3000,api:8080'
 ```
 
 ## Inputs
@@ -96,8 +96,8 @@ If any result has status `conflict` and `force` is `false`, the action exits
 with a failure and lists the conflicting containers. Set `force: true` to
 override.
 
-## Source / contributing
+## Issues and support
 
-The canonical source for this action is the Reoclo monorepo on Gitea. The
-GitHub repository (`reoclo/deploy-sync`) is a read-only mirror. Please open
-pull requests against the Gitea source; the mirror is updated automatically.
+For questions about the action or the External Deployments feature, see the
+[Reoclo documentation](https://docs.reoclo.com/guides/external-deployments/).
+For account or dashboard help, contact Reoclo support through the dashboard.
