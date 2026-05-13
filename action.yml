@@ -1,0 +1,32 @@
+name: 'Reoclo Deploy Sync'
+description: 'Sync proxy routes with Reoclo after an external container deployment'
+branding:
+  icon: 'refresh-cw'
+  color: 'blue'
+inputs:
+  api_key:
+    description: 'Reoclo tenant API key with `external_deploy` scope'
+    required: true
+  compose_file:
+    description: 'Path to a docker-compose file. Services on the reoclo-proxy network are auto-discovered.'
+    required: false
+  services:
+    description: 'Comma-separated list of `container_name:port` if not using compose discovery'
+    required: false
+  api_url:
+    description: 'Reoclo API URL (override for self-hosted instances)'
+    required: false
+    default: 'https://app.reoclo.com'
+outputs:
+  synced_fqdns:
+    description: 'Comma-separated FQDNs whose proxy routes were rewritten'
+  session_id:
+    description: 'Reoclo deploy session ID for audit'
+runs:
+  # Scaffold only — real runtime ships in v1.
+  using: 'composite'
+  steps:
+    - shell: bash
+      run: |
+        echo "::error::reoclo/deploy-sync is a scaffold; v1 has not been released yet."
+        exit 1
