@@ -8,25 +8,24 @@ inputs:
     description: 'Reoclo tenant API key with `external_deploy` scope'
     required: true
   compose_file:
-    description: 'Path to a docker-compose file. Services on the reoclo-proxy network are auto-discovered.'
+    description: 'Path to a docker-compose file. Services on the reoclo-proxy network or with `reoclo.managed=true` label are auto-discovered.'
     required: false
   services:
-    description: 'Comma-separated list of `container_name:port` if not using compose discovery'
+    description: 'Comma-separated list of `container_name:container_port` for non-compose workflows. Mutually exclusive with `compose_file`.'
     required: false
   api_url:
     description: 'Reoclo API URL (override for self-hosted instances)'
     required: false
     default: 'https://app.reoclo.com'
+  force:
+    description: 'Override conflict checks for this run (rare; use only for legitimate hotfixes).'
+    required: false
+    default: 'false'
 outputs:
   synced_fqdns:
-    description: 'Comma-separated FQDNs whose proxy routes were rewritten'
+    description: 'Comma-separated FQDNs whose proxy routes were rewritten or confirmed in this run'
   session_id:
-    description: 'Reoclo deploy session ID for audit'
+    description: 'Reoclo deploy session ID (for audit)'
 runs:
-  # Scaffold only — real runtime ships in v1.
-  using: 'composite'
-  steps:
-    - shell: bash
-      run: |
-        echo "::error::reoclo/deploy-sync is a scaffold; v1 has not been released yet."
-        exit 1
+  using: 'node20'
+  main: 'dist/index.js'
