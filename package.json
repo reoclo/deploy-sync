@@ -1,7 +1,8 @@
 {
   "name": "@reoclo/deploy-sync",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
+  "type": "module",
   "description": "Sync proxy routes with Reoclo after an external container deployment",
   "scripts": {
     "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt",
@@ -9,8 +10,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@actions/core": "^1.11.0",
-    "@actions/http-client": "^2.2.0",
+    "@actions/core": "^3.0.1",
+    "@actions/http-client": "^4.0.1",
     "yaml": "^2.6.0"
   },
   "devDependencies": {
