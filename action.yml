@@ -35,6 +35,10 @@ runs:
       shell: bash
       env:
         REOCLO_PIN: v0.44.0
+        # SHA-256 of the pinned release's install.sh (stable across releases). The
+        # installer then verifies the downloaded binary against SHA256SUMS, so this
+        # gives a tamper-evident chain: pinned hash -> installer -> binary.
+        REOCLO_INSTALL_SHA256: 2ea6c2766d2cf5def9a022ed255874f9a48ce1da5184a36df9e8e547a98cfa94
       run: |
         set -euo pipefail
         want="${REOCLO_PIN#v}"
@@ -44,8 +48,13 @@ runs:
         fi
         dir="${RUNNER_TEMP:-/tmp}/reoclo-bin"
         mkdir -p "$dir"
-        curl -fsSL "https://github.com/reoclo/cli/releases/download/${REOCLO_PIN}/install.sh" \
-          | sh -s -- --version "${REOCLO_PIN}" --install-dir "$dir" --no-modify-path
+        curl -fsSL -o "$dir/install.sh" "https://github.com/reoclo/cli/releases/download/${REOCLO_PIN}/install.sh"
+        if command -v sha256sum >/dev/null 2>&1; then
+          echo "${REOCLO_INSTALL_SHA256}  ${dir}/install.sh" | sha256sum -c -
+        else
+          echo "${REOCLO_INSTALL_SHA256}  ${dir}/install.sh" | shasum -a 256 -c -
+        fi
+        sh "$dir/install.sh" --version "${REOCLO_PIN}" --install-dir "$dir" --no-modify-path
         echo "$dir" >> "$GITHUB_PATH"
     - name: Deploy sync
       id: sync
