@@ -1,0 +1,34 @@
+name: ci
+# Regression guard for the action's CLI-install step. Runs the real action with
+# dummy credentials (so it installs the pinned reoclo CLI, then fails cleanly at
+# auth) and asserts the CLI ended up on PATH. This catches install regressions
+# like the bash-only install.sh that broke under sh/dash.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: run the action (installs CLI, then fails on the dummy key)
+        id: act
+        continue-on-error: true
+        uses: ./
+        with:
+          api_key: dummy-not-an-rca-key
+          services: "dummy-svc:3000"
+
+      - name: the CLI must have been installed by the action
+        run: |
+          set -e
+          command -v reoclo
+          reoclo --version
+
+      - name: the action must have run past install and failed on the dummy key
+        run: |
+          test "${{ steps.act.outcome }}" = "failure" \
+            || { echo "expected the action to fail on the dummy key (reached auth)"; exit 1; }
