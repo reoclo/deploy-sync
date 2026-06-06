@@ -24,8 +24,77 @@ inputs:
 outputs:
   synced_fqdns:
     description: 'Comma-separated FQDNs whose proxy routes were rewritten or confirmed in this run'
+    value: ${{ steps.sync.outputs.synced_fqdns }}
   session_id:
     description: 'Reoclo deploy session ID (for audit)'
+    value: ${{ steps.sync.outputs.session_id }}
 runs:
-  using: 'node24'
-  main: 'dist/index.js'
+  using: 'composite'
+  steps:
+    - name: Ensure reoclo CLI
+      shell: bash
+      env:
+        REOCLO_PIN: v0.44.0
+      run: |
+        set -euo pipefail
+        want="${REOCLO_PIN#v}"
+        if command -v reoclo >/dev/null 2>&1 && [ "$(reoclo --version 2>/dev/null || true)" = "$want" ]; then
+          echo "reoclo $want already present"
+          exit 0
+        fi
+        dir="${RUNNER_TEMP:-/tmp}/reoclo-bin"
+        mkdir -p "$dir"
+        curl -fsSL "https://github.com/reoclo/cli/releases/download/${REOCLO_PIN}/install.sh" \
+          | sh -s -- --version "${REOCLO_PIN}" --install-dir "$dir" --no-modify-path
+        echo "$dir" >> "$GITHUB_PATH"
+    - name: Deploy sync
+      id: sync
+      shell: bash
+      env:
+        REOCLO_AUTOMATION_KEY: ${{ inputs.api_key }}
+        REOCLO_API_URL: ${{ inputs.api_url }}
+        IN_COMPOSE: ${{ inputs.compose_file }}
+        IN_SERVICES: ${{ inputs.services }}
+        IN_FORCE: ${{ inputs.force }}
+      run: |
+        set -euo pipefail
+
+        args=(deploy sync --output json)
+        if [ -n "$IN_COMPOSE" ]; then args+=(--compose-file "$IN_COMPOSE"); fi
+        if [ -n "$IN_SERVICES" ]; then args+=(--services "$IN_SERVICES"); fi
+        if [ "$IN_FORCE" = "true" ]; then args+=(--force); fi
+
+        set +e
+        out="$(reoclo "${args[@]}")"
+        rc=$?
+        set -e
+
+        # Write outputs
+        {
+          echo "session_id=$(printf '%s' "$out" | jq -r '.session_id // ""')"
+          echo "synced_fqdns=$(printf '%s' "$out" | jq -r '(.synced_fqdns // []) | join(",")')"
+        } >> "$GITHUB_OUTPUT"
+
+        # Write step summary
+        if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+          {
+            echo "## Reoclo Deploy Sync"
+            echo ""
+            echo "Session: \`$(printf '%s' "$out" | jq -r '.session_id // ""')\`"
+            echo ""
+            echo "| Container | Status | FQDNs | Notes |"
+            echo "| --- | --- | --- | --- |"
+            printf '%s' "$out" | jq -r '
+              .results[]? |
+              "| \(.container_name) | \(.status) | \((.synced_fqdns // []) | join(", ") | if . == "" then "-" else . end) | \(.reason // "-") |"
+            '
+            errors_count="$(printf '%s' "$out" | jq -r '(.errors // []) | length')"
+            if [ "$errors_count" -gt 0 ]; then
+              echo ""
+              echo "### Errors"
+              printf '%s' "$out" | jq -r '.errors[]? | "- **\(.container_name)**: \(.reason)"'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+        exit $rc

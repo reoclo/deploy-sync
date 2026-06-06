@@ -4,13 +4,12 @@
 
 After an external CI pipeline builds and deploys container images, this action
 notifies Reoclo so it can update its reverse-proxy routes to point at the newly
-running containers. It opens a short-lived deploy session, submits deployment
-metadata for each discovered service, and revokes the session when finished.
+running containers. It runs `reoclo deploy sync` via the pinned Reoclo CLI and
+writes a results table to the GitHub step summary.
 
-The action uses Reoclo's external-deploy API endpoints. Discovery can be
-automatic (from a docker-compose file) or explicit (a comma-separated list of
-container names and ports). Results are written to the GitHub step summary and
-exposed as outputs for downstream steps.
+Discovery can be automatic (from a docker-compose file) or explicit (a
+comma-separated list of container names and ports). Outputs are exposed for
+downstream steps.
 
 ## Setup
 
@@ -27,7 +26,7 @@ exposed as outputs for downstream steps.
 
 ```yaml
 - name: Sync Reoclo proxy routes
-  uses: reoclo/deploy-sync@v1
+  uses: reoclo/deploy-sync@v2
   with:
     api_key: ${{ secrets.REOCLO_API_KEY }}
     compose_file: docker-compose.prod.yml
@@ -40,7 +39,7 @@ or carry the `reoclo.managed=true` label (see [How discovery works](#how-discove
 
 ```yaml
 - name: Sync Reoclo proxy routes
-  uses: reoclo/deploy-sync@v1
+  uses: reoclo/deploy-sync@v2
   with:
     api_key: ${{ secrets.REOCLO_API_KEY }}
     services: 'web:3000,api:8080'
@@ -50,7 +49,7 @@ or carry the `reoclo.managed=true` label (see [How discovery works](#how-discove
 
 | Input | Required | Default | Description |
 | --- | --- | --- | --- |
-| `api_key` | yes | — | Reoclo tenant API key (`rca_*`) with `external_deploy` scope |
+| `api_key` | yes | — | Reoclo automation API key (`rca_*`) with `external_deploy` scope |
 | `compose_file` | no | — | Path to a docker-compose file for auto-discovery |
 | `services` | no | — | Comma-separated `container_name:port` pairs. Mutually exclusive with `compose_file`. |
 | `api_url` | no | `https://api.reoclo.com` | Override for self-hosted Reoclo instances |
@@ -65,19 +64,11 @@ or carry the `reoclo.managed=true` label (see [How discovery works](#how-discove
 
 ## How discovery works
 
-When `compose_file` is provided, the action reads the YAML and includes a
+When `compose_file` is provided, the CLI reads the YAML and includes a
 service if **either** condition is true:
 
 - The service's `networks` list or map contains `reoclo-proxy`.
 - The service's `labels` list or map contains `reoclo.managed=true`.
-
-For each included service, the action extracts:
-
-- `container_name` — the explicit `container_name` field, or the service key
-  as a fallback (matching Docker Compose's own default naming).
-- `container_port` — the first `expose:` entry, or the container side of the
-  first `ports:` mapping.
-- `image_tag` — the `image:` field as-is (may be null).
 
 Use `services:` instead of `compose_file:` when you do not have a compose file
 in the repository, or when you need to sync containers that are not managed via
@@ -92,9 +83,38 @@ Compose at all.
 | `conflict` | Submitted state conflicts with a signature from another source | Investigate, then rerun with `force: true` if intentional |
 | `drift_recovered` | Reoclo detected drift and restored the correct state | Review why drift occurred |
 
-If any result has status `conflict` and `force` is `false`, the action exits
-with a failure and lists the conflicting containers. Set `force: true` to
-override.
+If any result has status `conflict` and `force` is `false`, the CLI exits
+non-zero. Set `force: true` to override.
+
+## How It Works
+
+`v2` is a thin wrapper around the [`reoclo` CLI](https://github.com/reoclo/cli)
+(the same engine that powers Gitea Actions and Woodpecker), so behaviour is
+identical across CI systems:
+
+1. A composite step installs the pinned `reoclo` CLI (downloaded once per job;
+   no Node runtime needed).
+2. It runs `reoclo deploy sync … --output json` with `REOCLO_AUTOMATION_KEY`
+   from `api_key`.
+3. The CLI calls the Reoclo automation API and returns a JSON payload with
+   `session_id`, `synced_fqdns`, and per-container `results`.
+4. The action parses the JSON with `jq` (preinstalled on GitHub-hosted and
+   standard Gitea `act_runner` images), writes outputs to `$GITHUB_OUTPUT`, and
+   appends a markdown table to `$GITHUB_STEP_SUMMARY`.
+5. The CLI's exit code is preserved — non-zero on conflict or errors — so the
+   step fails correctly even after outputs are written.
+
+## Gitea Actions
+
+The repo is mirrored to `git.boxpositron.dev/reoclo/deploy-sync`, so the same
+action runs on a self-hosted Gitea `act_runner`:
+
+```yaml
+- uses: git.boxpositron.dev/reoclo/deploy-sync@v2
+  with:
+    api_key: ${{ secrets.REOCLO_API_KEY }}
+    compose_file: docker-compose.prod.yml
+```
 
 ## Issues and support
 
