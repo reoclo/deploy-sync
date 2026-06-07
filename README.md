@@ -1,4 +1,4 @@
-# reoclo/deploy-sync
+# Reoclo Deploy Sync (`@reoclo/deploy-sync`)
 
 [![GitHub Marketplace](https://img.shields.io/badge/Marketplace-Reoclo%20Deploy%20Sync-2188ff?logo=github&logoColor=white)](https://github.com/marketplace/actions/reoclo-deploy-sync)
 [![Release](https://img.shields.io/github/v/release/reoclo/deploy-sync?logo=github&label=release&color=2188ff&sort=semver)](https://github.com/reoclo/deploy-sync/releases/latest)
