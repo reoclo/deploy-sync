@@ -1,5 +1,10 @@
 # reoclo/deploy-sync
 
+[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-Reoclo%20Deploy%20Sync-2188ff?logo=github&logoColor=white)](https://github.com/marketplace/actions/reoclo-deploy-sync)
+[![Release](https://img.shields.io/github/v/release/reoclo/deploy-sync?logo=github&label=release&color=2188ff&sort=semver)](https://github.com/reoclo/deploy-sync/releases/latest)
+[![CI](https://github.com/reoclo/deploy-sync/actions/workflows/ci.yml/badge.svg)](https://github.com/reoclo/deploy-sync/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+
 ## What this does
 
 After an external CI pipeline builds and deploys container images, this action
