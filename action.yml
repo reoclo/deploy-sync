@@ -34,7 +34,7 @@ runs:
     - name: Ensure reoclo CLI
       shell: bash
       env:
-        REOCLO_PIN: v0.44.3
+        REOCLO_PIN: v0.45.0
         # SHA-256 of the pinned release's install.sh (stable across releases). The
         # installer then verifies the downloaded binary against SHA256SUMS, so this
         # gives a tamper-evident chain: pinned hash -> installer -> binary.
@@ -84,8 +84,13 @@ runs:
           echo "synced_fqdns=$(printf '%s' "$out" | jq -r '(.synced_fqdns // []) | join(",")')"
         } >> "$GITHUB_OUTPUT"
 
-        # Write step summary
-        if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+        # Write step summary — only when the CLI returned parseable JSON. A
+        # failed run (e.g. a 400 from session creation) writes its error to
+        # stderr and nothing to stdout, leaving "$out" empty; rendering the table
+        # then made `jq` choke and `[ "$errors_count" -gt 0 ]` print a spurious
+        # "integer expression expected". Skip the table in that case — the CLI's
+        # stderr already carries the real error and we still `exit $rc` below.
+        if [ -n "${GITHUB_STEP_SUMMARY:-}" ] && printf '%s' "$out" | jq -e . >/dev/null 2>&1; then
           {
             echo "## Reoclo Deploy Sync"
             echo ""
@@ -98,7 +103,7 @@ runs:
               "| \(.container_name) | \(.status) | \((.synced_fqdns // []) | join(", ") | if . == "" then "-" else . end) | \(.reason // "-") |"
             '
             errors_count="$(printf '%s' "$out" | jq -r '(.errors // []) | length')"
-            if [ "$errors_count" -gt 0 ]; then
+            if [ "${errors_count:-0}" -gt 0 ]; then
               echo ""
               echo "### Errors"
               printf '%s' "$out" | jq -r '.errors[]? | "- **\(.container_name)**: \(.reason)"'

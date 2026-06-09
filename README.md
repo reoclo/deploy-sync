@@ -22,8 +22,11 @@ downstream steps.
    enable the `external_deploy` operation scope for it.
 2. Store the key in your repository or organisation secrets:
    `Settings > Secrets > Actions > New secret`, name it `REOCLO_API_KEY`.
-3. Ensure the containers you want to sync are registered as Reoclo Applications
-   with matching `linked_container_name` values.
+3. Bind the containers you want to sync to Reoclo Applications. Either label the
+   service with `reoclo.app: <application-slug>` (recommended — identity is
+   independent of the container name), or register the Application with a
+   matching `linked_container_name` (and optionally `linked_container_names`
+   aliases or a `linked_container_name_pattern` glob).
 
 ## Usage
 
