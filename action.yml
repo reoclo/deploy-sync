@@ -21,6 +21,14 @@ inputs:
     description: 'Override conflict checks for this run (rare; use only for legitimate hotfixes).'
     required: false
     default: 'false'
+  wait:
+    description: "After sync, wait until each app's proxy route is live (Caddy running, route applied, container attached) before returning. Set 'false' to return as soon as the sync is recorded."
+    required: false
+    default: 'true'
+  wait_timeout:
+    description: 'Max seconds to wait for convergence when `wait` is true (the step fails if not converged in time).'
+    required: false
+    default: '120'
 outputs:
   synced_fqdns:
     description: 'Comma-separated FQDNs whose proxy routes were rewritten or confirmed in this run'
@@ -34,7 +42,7 @@ runs:
     - name: Ensure reoclo CLI
       shell: bash
       env:
-        REOCLO_PIN: v0.45.0
+        REOCLO_PIN: v0.47.0
         # SHA-256 of the pinned release's install.sh (stable across releases). The
         # installer then verifies the downloaded binary against SHA256SUMS, so this
         # gives a tamper-evident chain: pinned hash -> installer -> binary.
@@ -65,6 +73,8 @@ runs:
         IN_COMPOSE: ${{ inputs.compose_file }}
         IN_SERVICES: ${{ inputs.services }}
         IN_FORCE: ${{ inputs.force }}
+        IN_WAIT: ${{ inputs.wait }}
+        IN_WAIT_TIMEOUT: ${{ inputs.wait_timeout }}
       run: |
         set -euo pipefail
 
@@ -72,6 +82,13 @@ runs:
         if [ -n "$IN_COMPOSE" ]; then args+=(--compose-file "$IN_COMPOSE"); fi
         if [ -n "$IN_SERVICES" ]; then args+=(--services "$IN_SERVICES"); fi
         if [ "$IN_FORCE" = "true" ]; then args+=(--force); fi
+        # Wait for the async reconciler to apply the routes (default on). On an
+        # older Reoclo API with no status endpoint the CLI skips the wait with a
+        # warning, so this stays safe across server versions.
+        if [ "$IN_WAIT" != "false" ]; then
+          args+=(--wait)
+          if [ -n "$IN_WAIT_TIMEOUT" ]; then args+=(--wait-timeout "$IN_WAIT_TIMEOUT"); fi
+        fi
 
         set +e
         out="$(reoclo "${args[@]}")"
