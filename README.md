@@ -62,6 +62,8 @@ or carry the `reoclo.managed=true` label (see [How discovery works](#how-discove
 | `services` | no | — | Comma-separated `container_name:port` pairs. Mutually exclusive with `compose_file`. |
 | `api_url` | no | `https://api.reoclo.com` | Override for self-hosted Reoclo instances |
 | `force` | no | `false` | Skip conflict checks. Use only for legitimate hotfixes. |
+| `wait` | no | `true` | After sync, wait until each app's proxy route is live (Caddy running, route applied, container attached) before returning. Set `false` to return as soon as the sync is recorded. Skipped with a warning against Reoclo API < 1.75.0. |
+| `wait_timeout` | no | `120` | Max seconds to wait for convergence when `wait` is true; the step fails if not converged in time. |
 
 ## Outputs
 
