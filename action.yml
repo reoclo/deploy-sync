@@ -34,11 +34,11 @@ runs:
     - name: Ensure reoclo CLI
       shell: bash
       env:
-        REOCLO_PIN: v0.44.2
+        REOCLO_PIN: v0.44.3
         # SHA-256 of the pinned release's install.sh (stable across releases). The
         # installer then verifies the downloaded binary against SHA256SUMS, so this
         # gives a tamper-evident chain: pinned hash -> installer -> binary.
-        REOCLO_INSTALL_SHA256: a1ac3c97e6965078dec9115e14f20a6731ba03b079c92ce81140491a9eff1cce
+        REOCLO_INSTALL_SHA256: 692546fb8583ba743c5ab462ee3a8dc6dd40836cf8e7bbf0f80e000eac042be9
       run: |
         set -euo pipefail
         want="${REOCLO_PIN#v}"
