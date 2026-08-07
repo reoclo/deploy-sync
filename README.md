@@ -21,7 +21,10 @@ downstream steps.
 1. In the Reoclo dashboard, generate a tenant automation API key (`rca_*`) and
    enable the `external_deploy` operation scope for it.
 2. Store the key in your repository or organisation secrets:
-   `Settings > Secrets > Actions > New secret`, name it `REOCLO_API_KEY`.
+   `Settings > Secrets > Actions > New secret`, name it `REOCLO_AUTOMATION_KEY`.
+
+   If your repository already has a secret named `REOCLO_API_KEY`, keep it and
+   pass it to `api_key`. The action provides `REOCLO_AUTOMATION_KEY` to the CLI.
 3. Bind the containers you want to sync to Reoclo Applications. Either label the
    service with `reoclo.app: <application-slug>` (recommended — identity is
    independent of the container name), or register the Application with a
@@ -36,7 +39,7 @@ downstream steps.
 - name: Sync Reoclo proxy routes
   uses: reoclo/deploy-sync@v2
   with:
-    api_key: ${{ secrets.REOCLO_API_KEY }}
+    api_key: ${{ secrets.REOCLO_AUTOMATION_KEY }}
     compose_file: docker-compose.prod.yml
 ```
 
@@ -49,7 +52,7 @@ or carry the `reoclo.managed=true` label (see [How discovery works](#how-discove
 - name: Sync Reoclo proxy routes
   uses: reoclo/deploy-sync@v2
   with:
-    api_key: ${{ secrets.REOCLO_API_KEY }}
+    api_key: ${{ secrets.REOCLO_AUTOMATION_KEY }}
     services: 'web:3000,api:8080'
 ```
 
@@ -122,7 +125,7 @@ action runs on a self-hosted Gitea `act_runner`:
 ```yaml
 - uses: git.boxpositron.dev/reoclo/deploy-sync@v2
   with:
-    api_key: ${{ secrets.REOCLO_API_KEY }}
+    api_key: ${{ secrets.REOCLO_AUTOMATION_KEY }}
     compose_file: docker-compose.prod.yml
 ```
 
